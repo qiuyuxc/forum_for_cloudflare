@@ -275,18 +275,18 @@ export function IndexPage() {
 		<PageShell>
 			<div className="space-y-6">
 				{banner ? <div className="rounded-md border bg-muted/40 p-3 text-sm">{banner}</div> : null}
-				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-					<div>
+				<div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+					<div className="min-w-0">
 						<h1 className="text-2xl font-semibold tracking-tight">D1 Forum</h1>
-						<p className="text-sm text-muted-foreground">开源： https://github.com/afoim/forum_for_cloudflare 基于 shadcn/ui + Tailwind 的多页应用（非 SPA），由 Cloudflare Workers 在边缘统一提供静态页面与 API。</p>
+						<p className="break-all text-sm text-muted-foreground">开源： https://github.com/afoim/forum_for_cloudflare 基于 shadcn/ui + Tailwind 的多页应用（非 SPA），由 Cloudflare Workers 在边缘统一提供静态页面与 API。</p>
 					</div>
-					<div className="flex items-center gap-2">
+					<div className="flex w-full min-w-0 flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
 						<label className="text-sm text-muted-foreground" htmlFor="category-filter">
 							分类
 						</label>
 						<select
 							id="category-filter"
-							className="h-9 rounded-md border bg-background px-3 text-sm"
+							className="h-9 max-w-full min-w-0 rounded-md border bg-background px-3 text-sm"
 							value={selectedCategory}
 							onChange={(e) => {
 								setSelectedCategory(e.target.value);
@@ -306,7 +306,7 @@ export function IndexPage() {
 						</label>
 						<select
 							id="sort-filter"
-							className="h-9 rounded-md border bg-background px-3 text-sm"
+							className="h-9 max-w-full min-w-0 rounded-md border bg-background px-3 text-sm"
 							value={sortOption}
 							onChange={(e) => {
 								setSortOption(e.target.value);
@@ -320,7 +320,7 @@ export function IndexPage() {
 							<option value="views_desc">最多观看</option>
 						</select>
 						<form
-							className="flex items-center gap-2"
+							className="flex min-w-0 basis-full flex-wrap items-center gap-2 sm:basis-auto"
 							onSubmit={(e) => {
 								e.preventDefault();
 								setPageOffset(0);
@@ -331,9 +331,9 @@ export function IndexPage() {
 								value={searchInput}
 								onChange={(e) => setSearchInput(e.target.value)}
 								placeholder="搜索标题/内容"
-								className="h-9 w-48"
+								className="h-9 min-w-0 w-full flex-1 sm:w-48"
 							/>
-							<Button variant="outline" size="sm" type="submit" disabled={loading}>
+							<Button variant="outline" size="sm" type="submit" disabled={loading} className="shrink-0">
 								<Search className="h-4 w-4" />
 								<span className="sr-only">搜索</span>
 							</Button>
@@ -348,6 +348,7 @@ export function IndexPage() {
 										setPageOffset(0);
 									}}
 									disabled={loading}
+									className="shrink-0"
 								>
 									<X className="h-4 w-4" />
 									<span className="sr-only">清除</span>

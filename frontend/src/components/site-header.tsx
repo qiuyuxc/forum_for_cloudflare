@@ -27,7 +27,7 @@ export function SiteHeader({
 	}, []);
 	return (
 		<header className="w-full border-b bg-background">
-			<div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
+			<div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-4 sm:gap-4">
 				<a
 					href="/"
 					className="inline-flex items-center justify-center rounded-md border border-transparent p-2 text-foreground hover:bg-muted/40"
@@ -35,14 +35,14 @@ export function SiteHeader({
 					<Home className="h-5 w-5" />
 					<span className="sr-only">主页</span>
 				</a>
-				<div className="flex items-center gap-2">
+				<div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
 					<Button type="button" variant="ghost" size="sm" onClick={toggleTheme}>
 						{theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
 						<span className="sr-only">切换主题</span>
 					</Button>
 					{user ? (
 						<>
-							<span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+							<span className="hidden min-w-0 items-center gap-2 text-sm text-muted-foreground sm:inline-flex">
 								{user.avatar_url ? (
 									<img
 										src={user.avatar_url}
@@ -56,7 +56,7 @@ export function SiteHeader({
 										<UserIcon className="h-4 w-4" />
 									</span>
 								)}
-								<span>
+								<span className="truncate">
 									欢迎，<span className="text-foreground">{user.username}</span>
 								</span>
 								{user.role === 'admin' ? (
@@ -80,7 +80,7 @@ export function SiteHeader({
 									<span className="sr-only">设置</span>
 								</a>
 							</Button>
-							<Separator orientation="vertical" className="h-6" />
+							<Separator orientation="vertical" className="hidden h-6 sm:block" />
 							<Button
 								variant="destructive"
 								size="sm"
