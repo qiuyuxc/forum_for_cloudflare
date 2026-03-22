@@ -374,7 +374,7 @@ export function IndexPage() {
 						</CardHeader>
 						<CardContent>
 							{!createOpen ? (
-								<div className="text-sm text-muted-foreground">点击右侧按钮展开编辑器。</div>
+								<div className="text-sm text-muted-foreground">点击右侧按钮展开编辑器</div>
 							) : (
 								<form className="space-y-4" onSubmit={createPost}>
 								{createError ? <div className="rounded-md border border-destructive/50 bg-destructive/5 p-3 text-sm text-destructive">{createError}</div> : null}
