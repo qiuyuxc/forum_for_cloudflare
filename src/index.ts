@@ -1348,7 +1348,7 @@ export default {
 
 				if (success) {
 					// Redirect to home page with verified param
-					return Response.redirect(`https://i.2x.nz/?verified=true`, 302);
+					return Response.redirect(`https://bbs.quiyu.cn/?verified=true`, 302);
 				} else {
 					return new Response('token 无效或已过期', { status: 400 });
 				}
@@ -1671,7 +1671,7 @@ export default {
 					// Fetch commenter name
 					const commenter = await env.forum_db.prepare('SELECT username FROM users WHERE id = ?').bind(userPayload.id).first();
 					const commenterName = commenter.username;
-					const postUrl = `https://i.2x.nz/posts/${postId}`;
+					const postUrl = `https://bbs.quiyu.cn/posts/${postId}`;
 
 					// Notify Post Author (if not self)
 					if (post && post.author_id !== userPayload.id && post.email_notifications === 1) {
