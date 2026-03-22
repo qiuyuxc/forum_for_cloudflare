@@ -618,7 +618,7 @@ export default {
 					.bind(token, expires, user.id).run();
 
 				// Base URL logic: Use env var or default to request origin, but override for prod if needed
-				const baseUrl = 'https://i.2x.nz'; // Hardcoded as requested
+				const baseUrl = 'https://bbs.quiyu.cn'; // Hardcoded as requested
 				const resetLink = `${baseUrl}/reset?token=${token}`;
 				
 				const emailHtml = `
@@ -730,7 +730,7 @@ export default {
 				
 				await security.logAudit(userPayload.id, 'CHANGE_EMAIL_INIT', 'user', String(user_id), { new_email }, request);
 
-				const baseUrl = 'https://i.2x.nz';
+				const baseUrl = 'https://bbs.quiyu.cn';
 				const verifyLink = `${baseUrl}/api/verify-email-change?token=${token}`;
 				const emailHtml = `
 					<h1>确认更换邮箱</h1>
@@ -757,7 +757,7 @@ export default {
 				await env.forum_db.prepare('UPDATE users SET email = ?, pending_email = NULL, email_change_token = NULL WHERE id = ?')
 					.bind(user.pending_email, user.id).run();
 
-				return Response.redirect(`https://i.2x.nz/?email_changed=true`, 302);
+				return Response.redirect(`https://bbs.quiyu.cn/?email_changed=true`, 302);
 			} catch (e) {
 				return new Response('Failed', { status: 500 });
 			}
@@ -986,7 +986,7 @@ export default {
 					await env.forum_db.prepare('UPDATE users SET verification_token = ? WHERE id = ?').bind(token, id).run();
 				}
 
-				const baseUrl = 'https://i.2x.nz';
+				const baseUrl = 'https://bbs.quiyu.cn';
 				const verifyLink = `${baseUrl}/api/verify?token=${token}`;
 				const emailHtml = `
 					<h1>欢迎加入论坛，${user.username}！</h1>
@@ -1289,7 +1289,7 @@ export default {
 
 				// Pre-check email deliverability (Send a test email first)
 				// Note: We don't insert user yet. If email fails, we abort.
-				const baseUrl = 'https://i.2x.nz';
+				const baseUrl = 'https://bbs.quiyu.cn';
 				const verifyLink = `${baseUrl}/api/verify?token=${verificationToken}`;
 				
 				const emailHtml = `
