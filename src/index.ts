@@ -3380,6 +3380,92 @@ export default {
 			}
 		}
 
+
+		// ============== 举报系统 ==============
+
+		// POST /api/posts/:id/report
+		if (url.pathname.match(/^\/api\/posts\/\d+\/report$/) && method === 'POST') {
+			const postId = url.pathname.split('/')[3];
+			try {
+				const userPayload = await authenticate(request);
+				const body = await request.json() as any;
+				const reason = (body.reason || '').trim().slice(0, 500);
+
+				const post = await env.forum_db.prepare('SELECT id FROM posts WHERE id = ?').bind(postId).first();
+				if (!post) return jsonResponse({ error: 'Post not found' }, 404);
+
+				await env.forum_db.prepare(
+					'INSERT INTO reports (post_id, reporter_id, reason) VALUES (?, ?, ?)'
+				).bind(postId, userPayload.id, reason).run();
+
+				await security.logAudit(userPayload.id, 'REPORT_POST', 'report', 'new', { postId, reason }, request);
+				return jsonResponse({ ok: true });
+			} catch (e) { return handleError(e); }
+		}
+
+		// POST /api/comments/:id/report
+		if (url.pathname.match(/^\/api\/comments\/\d+\/report$/) && method === 'POST') {
+			const commentId = url.pathname.split('/')[3];
+			try {
+				const userPayload = await authenticate(request);
+				const body = await request.json() as any;
+				const reason = (body.reason || '').trim().slice(0, 500);
+
+				const comment = await env.forum_db.prepare('SELECT id FROM comments WHERE id = ?').bind(commentId).first();
+				if (!comment) return jsonResponse({ error: 'Comment not found' }, 404);
+
+				await env.forum_db.prepare(
+					'INSERT INTO reports (comment_id, reporter_id, reason) VALUES (?, ?, ?)'
+				).bind(commentId, userPayload.id, reason).run();
+
+				await security.logAudit(userPayload.id, 'REPORT_COMMENT', 'report', 'new', { commentId, reason }, request);
+				return jsonResponse({ ok: true });
+			} catch (e) { return handleError(e); }
+		}
+
+		// GET /api/admin/reports
+		if (url.pathname === '/api/admin/reports' && method === 'GET') {
+			try {
+				const userPayload = await authenticate(request);
+				if (userPayload.role !== 'admin') return jsonResponse({ error: 'Unauthorized' }, 403);
+
+				const limit = Math.min(parseInt(url.searchParams.get('limit') || '50') as number, 200);
+				const offset = parseInt(url.searchParams.get('offset') || '0') as number;
+				const status = url.searchParams.get('status') || 'pending';
+
+				const reports = await env.forum_db.prepare(
+					'SELECT r.*, reporter.username AS reporter_name, p.title AS post_title FROM reports r ' +
+					'LEFT JOIN posts p ON r.post_id = p.id ' +
+					'LEFT JOIN users reporter ON r.reporter_id = reporter.id ' +
+					'WHERE r.status = ? ORDER BY r.created_at DESC LIMIT ? OFFSET ?'
+				).bind(status, limit, offset).all();
+
+				const total = await env.forum_db.prepare(
+					'SELECT COUNT(*) as count FROM reports WHERE status = ?'
+				).bind(status).first();
+
+				return jsonResponse({ reports: reports.results, total: (total as any)?.count || 0 });
+			} catch (e) { return handleError(e); }
+		}
+
+		// POST /api/admin/reports/:id/resolve
+		if (url.pathname.match(/^\/api\/admin\/reports\/\d+\/resolve$/) && method === 'POST') {
+			const reportId = url.pathname.split('/')[4];
+			try {
+				const userPayload = await authenticate(request);
+				if (userPayload.role !== 'admin') return jsonResponse({ error: 'Unauthorized' }, 403);
+
+				const body = await request.json() as any;
+				const resolution = (body.resolution || 'dismissed').trim();
+
+				await env.forum_db.prepare(
+					'UPDATE reports SET status = ?, resolved_by = ?, resolved_at = ?, resolution = ? WHERE id = ?'
+				).bind('resolved', userPayload.id, Math.floor(Date.now() / 1000), resolution, reportId).run();
+
+				return jsonResponse({ ok: true });
+			} catch (e) { return handleError(e); }
+		}
+
 		// ============== AI Draw Proxy (d.2x.nz) ==============
 		const DRAW_BACKEND = 'https://d.2x.nz';
 		const DRAW_ACCESS_CLIENT_ID = '6864bbcb13aa07d0f6f51233acdc9ad8.access';
