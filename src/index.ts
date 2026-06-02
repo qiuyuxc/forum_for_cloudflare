@@ -85,19 +85,32 @@ function rewriteCommentForResponse(comment: any, env: S3Env) {
 }
 
 // Utility to hash password
+const PBKDF2_ITERATIONS = 100000;
+
 async function hashPassword(password: string): Promise<string> {
-	const myText = new TextEncoder().encode(password);
-	const myDigest = await crypto.subtle.digest(
-		{
-			name: 'SHA-256',
-		},
-		myText
-	);
-	const hashArray = Array.from(new Uint8Array(myDigest));
-	const hashHex = hashArray
-		.map((b) => b.toString(16).padStart(2, '0'))
-		.join('');
-	return hashHex;
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+    const hash = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' }, key, 256);
+    const b64s = btoa(String.fromCharCode(...salt));
+    const b64h = btoa(String.fromCharCode(...new Uint8Array(hash)));
+    return `${b64s}:${b64h}`;
+}
+
+async function verifyPassword(password: string, stored: string): Promise<boolean> {
+    const parts = stored.split(':');
+    if (parts.length !== 2) {
+        // Legacy SHA-256 fallback
+        const myText = new TextEncoder().encode(password);
+        const myDigest = await crypto.subtle.digest({ name: 'SHA-256' }, myText);
+        const hashArray = Array.from(new Uint8Array(myDigest));
+        const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+        return stored === hashHex;
+    }
+    const salt = Uint8Array.from(atob(parts[0]), c => c.charCodeAt(0));
+    const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+    const hash = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' }, key, 256);
+    const b64h = btoa(String.fromCharCode(...new Uint8Array(hash)));
+    return parts[1] === b64h;
 }
 
 // Utility to generate a random token (simple UUID for now) - DEPRECATED for AUTH, used for verification/reset
@@ -210,8 +223,8 @@ const EMAIL_TEMPLATE_DEFINITIONS: EmailTemplateDefinition[] = [
 			subject: '密码重置请求',
 			html: `
 					<h1>密码重置请求</h1>
-					<p>我们收到了您的密码重置申请，请点击下方链接继续操作：</p>
-					<a href="${payload.resetLink}">立即重置密码</a>
+					<p>我们收到了您的密码重置申请，请在浏览器打开以下链接继续操作：</p>
+					<p>${payload.resetLink}</p>
 					<p>如果这不是您本人操作，请忽略此邮件。</p>
 					<p>该链接将在 1 小时后失效。</p>
 					${EMAIL_REPLY_HINT}
@@ -231,8 +244,8 @@ const EMAIL_TEMPLATE_DEFINITIONS: EmailTemplateDefinition[] = [
 			html: `
 					<h1>确认更换邮箱</h1>
 					<p>您正在将账户邮箱更换为 <strong>${escapeHtml(payload.newEmail)}</strong>。</p>
-					<p>请点击下方链接完成确认：</p>
-					<a href="${payload.verifyLink}">确认更换邮箱</a>
+					<p>请在浏览器打开以下链接完成确认：</p>
+					<p>${payload.verifyLink}</p>
 					<p>如果这不是您本人操作，请忽略此邮件。</p>
 					${EMAIL_REPLY_HINT}
 				`
@@ -250,8 +263,8 @@ const EMAIL_TEMPLATE_DEFINITIONS: EmailTemplateDefinition[] = [
 			subject: '请验证您的邮箱',
 			html: `
 					<h1>${escapeHtml(payload.username)}，欢迎加入论坛！</h1>
-					<p>请点击下方链接验证您的邮箱地址：</p>
-					<a href="${payload.verifyLink}">立即验证邮箱</a>
+					<p>请在浏览器打开以下链接验证您的邮箱地址：</p>
+					<p>${payload.verifyLink}</p>
 					<p>如果这不是您本人操作，请忽略此邮件。</p>
 					${EMAIL_REPLY_HINT}
 				`
@@ -269,8 +282,8 @@ const EMAIL_TEMPLATE_DEFINITIONS: EmailTemplateDefinition[] = [
 			subject: '请验证您的邮箱',
 			html: `
 					<h1>${escapeHtml(payload.username)}，您好！</h1>
-					<p>请点击下方链接验证您的邮箱地址：</p>
-					<a href="${payload.verifyLink}">立即验证邮箱</a>
+					<p>请在浏览器打开以下链接验证您的邮箱地址：</p>
+					<p>${payload.verifyLink}</p>
 					<p>如果这不是您本人操作，请忽略此邮件。</p>
 					${EMAIL_REPLY_HINT}
 				`
@@ -358,7 +371,7 @@ build: (payload) => ({
 					<p>${escapeHtml(payload.username)}，您好。</p>
 					<p>您发布的帖子"<strong>${escapeHtml(payload.postTitle)}</strong>"已被管理员删除。</p>
 					<p>如需了解详情，请联系管理员。</p>
-					<p><a href="${payload.postUrl}">帖子原链接</a></p>
+					<p>帖子链接：${payload.postUrl}</p>
 					${EMAIL_REPLY_HINT}
 				`
 		})
@@ -379,7 +392,7 @@ build: (payload) => ({
 					<h1>您的帖子有新评论</h1>
 					<p><strong>${escapeHtml(payload.commenterName)}</strong> 评论了您的帖子"<strong>${escapeHtml(payload.postTitle)}</strong>"：</p>
 					<blockquote>${escapeHtml(payload.commentContent)}</blockquote>
-					<p><a href="${payload.postUrl}">查看评论</a></p>
+					<p>链接：${payload.postUrl}</p>
 					<p style="font-size:0.8em;color:#666;">您收到这封邮件，是因为您已开启帖子相关邮件提醒。</p>
 					${EMAIL_REPLY_HINT}
 				`
@@ -401,7 +414,7 @@ build: (payload) => ({
 					<h1>您的评论有新回复</h1>
 					<p><strong>${escapeHtml(payload.commenterName)}</strong> 回复了您在"<strong>${escapeHtml(payload.postTitle)}</strong>"下的评论：</p>
 					<blockquote>${escapeHtml(payload.replyContent)}</blockquote>
-					<p><a href="${payload.postUrl}">查看回复</a></p>
+					<p>链接：${payload.postUrl}</p>
 					<p style="font-size:0.8em;color:#666;">您收到这封邮件，是因为您已开启帖子相关邮件提醒。</p>
 					${EMAIL_REPLY_HINT}
 				`
@@ -442,7 +455,7 @@ build: (payload) => ({
 					<h1>新帖通知</h1>
 					<p><strong>用户：</strong>${escapeHtml(payload.username)}</p>
 					<p><strong>标题：</strong>${escapeHtml(payload.title)}</p>
-					<p><a href="https://2x.nz/forum/post/?id=${encodeURIComponent(payload.postId)}">查看帖子</a></p>
+					<p>https://2x.nz/forum/post/?id=${encodeURIComponent(payload.postId)}</p>
 				`
 		})
 	}
@@ -993,13 +1006,25 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 				const userId = user.id.toString(); // Use verified user ID
 				const postId = formData.get('post_id') || 'general';
 				const type = formData.get('type') || 'post';
+				if (!['post', 'avatar', 'comment'].includes(type as string)) {
+					return jsonResponse({ error: 'Invalid upload type' }, 400);
+				}
 
 				if (!file || !(file instanceof File)) {
 					return jsonResponse({ error: 'No file uploaded' }, 400);
 				}
 
-				if (!file.type.startsWith('image/')) {
-					return jsonResponse({ error: 'Only images are allowed' }, 400);
+				// Validate file type by magic bytes (not extension/MIME, which can be faked)
+				const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+				const isValidImage = (
+					(header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) || // JPEG
+					(header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) || // PNG
+					(header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x38) || // GIF
+					(header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46 &&
+					 header[8] === 0x57 && header[9] === 0x45 && header[10] === 0x42 && header[11] === 0x50) // WEBP
+				);
+				if (!isValidImage) {
+					return jsonResponse({ error: 'Only JPEG/PNG/GIF/WEBP images are allowed' }, 400);
 				}
 
 				// Check file size (500KB = 500 * 1024 bytes)
@@ -1160,7 +1185,7 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 					})
 				});
 				const tokenText = await tokenRes.text();
-				console.log('[GitHub OAuth] token endpoint status =', tokenRes.status, ', body =', tokenText);
+				console.log('[GitHub OAuth] token endpoint status =', tokenRes.status, ', body length =', tokenText.length);
 				if (!tokenRes.ok) return failRedirect(state.redirect, `token_http_${tokenRes.status}`);
 				let tokenJson: { access_token?: string; error?: string; error_description?: string };
 				try {
@@ -1246,7 +1271,7 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 						return failRedirect(state.redirect, 'email_conflict');
 					}
 
-					const placeholderPassword = ''; // 通过 GitHub 注册的账号，password 留空，禁止密码登录直到用户设置密码
+					const placeholderPassword = crypto.randomUUID(); // 随机字符串，用户无法用密码登录（可通过重置密码设密）
 					const insertRes = await env.forum_db.prepare(
 						'INSERT INTO users (email, username, password, role, verified, github_id, github_login, github_avatar_url, avatar_url) VALUES (?, ?, ?, "user", 1, ?, ?, ?, ?)'
 					).bind(
@@ -1339,8 +1364,7 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 					return jsonResponse({ error: 'Please verify your email first' }, 403);
 				}
 
-				const passwordHash = await hashPassword(password);
-				if (user.password !== passwordHash) {
+				if (!await verifyPassword(password, user.password)) {
 					return jsonResponse({ error: 'Username or Password Error' }, 401);
 				}
 
@@ -2623,11 +2647,11 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 			}
 		}
 
-		// GET /users
+		// GET /users (public, no email to prevent scraping)
 		if (url.pathname === '/api/users' && method === 'GET') {
 			try {
 				const { results } = await env.forum_db.prepare(
-					'SELECT id, email, username, created_at FROM users'
+					'SELECT id, username, created_at FROM users'
 				).all();
 				return jsonResponse(results);
 			} catch (e) {
@@ -2839,6 +2863,8 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 		// GET /api/posts/:id
 		if (url.pathname.match(/^\/api\/posts\/\d+$/) && method === 'GET') {
 			const postId = url.pathname.split('/')[3];
+			let currentUser: any = null;
+			try { currentUser = await authenticate(request); } catch {}
 			try {
 				const post = await env.forum_db.prepare(
 					`SELECT 
@@ -2862,13 +2888,10 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 					(post as any).view_count = Number((post as any).view_count || 0) + 1;
 				} catch {}
 
-				// Check like status if user_id provided
-				const userId = url.searchParams.get('user_id');
-				if (userId) {
-					const like = await env.forum_db.prepare('SELECT id FROM likes WHERE post_id = ? AND user_id = ?').bind(postId, userId).first();
+				if (currentUser) {
+					const like = await env.forum_db.prepare('SELECT id FROM likes WHERE post_id = ? AND user_id = ?').bind(postId, currentUser.id).first();
 					(post as any).liked = !!like;
 				}
-
 				return jsonResponse(rewritePostForResponse(post, env as unknown as S3Env));
 			} catch (e) {
 				return handleError(e);
@@ -3098,7 +3121,9 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 				// Email Notification Logic
 				if (success) {
 					// 1. Notify Post Author
-					const post = await env.forum_db.prepare(
+				let currentUser: any = null;
+				try { currentUser = await authenticate(request); } catch {}
+				const post = await env.forum_db.prepare(
 						'SELECT posts.title, users.id as author_id, users.email, users.email_notifications, users.username FROM posts JOIN users ON posts.author_id = users.id WHERE posts.id = ?'
 					).bind(postId).first();
 
@@ -3361,7 +3386,7 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 		// POST /api/webhook/posts (Blog post notification from blog-post plugin)
 		if (url.pathname === '/api/webhook/posts' && method === 'POST') {
 			try {
-				const WEBHOOK_SECRET = env.BLOG_WEBHOOK_SECRET || 'hfp9yf934oufhgp439gh478o3ghriwue4';
+				const WEBHOOK_SECRET = env.GITHUB_WEBHOOK_SECRET || env.BLOG_WEBHOOK_SECRET;
 
 				// Verify secret header
 				const receivedSecret = request.headers.get('X-Webhook-Secret') || '';
@@ -3591,16 +3616,11 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 				return jsonResponse({ error: 'Unauthorized' }, 401);
 			}
 			const testUrl = `${DRAW_BACKEND}/api/workflows`;
-			const hasSecret = !!DRAW_ACCESS_CLIENT_SECRET;
-			const secretLen = DRAW_ACCESS_CLIENT_SECRET.length;
-			const secretPrefix = DRAW_ACCESS_CLIENT_SECRET.slice(0, 4);
 			const diag: Record<string, unknown> = {
 				draw_backend: DRAW_BACKEND,
 				test_url: testUrl,
 				client_id: DRAW_ACCESS_CLIENT_ID,
-				secret_configured: hasSecret,
-				secret_length: secretLen,
-				secret_prefix: secretPrefix + '...',
+				secret_configured: !!DRAW_ACCESS_CLIENT_SECRET,
 			};
 			try {
 				const resp = await fetch(testUrl, {
@@ -3609,16 +3629,7 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 						'CF-Access-Client-Secret': DRAW_ACCESS_CLIENT_SECRET,
 					},
 				});
-				const body = await resp.text();
 				diag.upstream_status = resp.status;
-				diag.upstream_status_text = resp.statusText;
-				diag.upstream_content_type = resp.headers.get('content-type');
-				diag.upstream_cf_ray = resp.headers.get('cf-ray');
-				diag.upstream_server = resp.headers.get('server');
-				diag.upstream_body_preview = body.slice(0, 500);
-				const respHeaders: Record<string, string> = {};
-				resp.headers.forEach((v, k) => { respHeaders[k] = v; });
-				diag.upstream_headers = respHeaders;
 			} catch (e) {
 				diag.upstream_error = String(e);
 			}
@@ -3633,7 +3644,6 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 					},
 				});
 				diag.ws_http_status = resp2.status;
-				diag.ws_http_body_preview = (await resp2.text()).slice(0, 200);
 			} catch (e) {
 				diag.ws_http_error = String(e);
 			}
