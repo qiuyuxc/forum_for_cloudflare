@@ -6,7 +6,7 @@ const DEFAULT_FROM_NAME = 'forum';
 const SMTP_CONFIG = {
     hostname: 'smtp.feishu.cn',
     port: 465,
-    user: 'bbs.kukie.cn',
+    user: 'bbs@kukie.cn',
 };
 
 function getSMTPPassword(env?: { SMTP_PASS?: string }): string {
