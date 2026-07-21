@@ -196,7 +196,7 @@ function escapeHtml(value: string): string {
 		.replace(/'/g, '&#39;');
 }
 
-const EMAIL_REPLY_HINT = '<p style="margin-top: 20px; padding: 15px; background-color: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 4px;"><strong>💡 提示：</strong>建议您<a href="mailto:i@2x.nz?subject=%E5%8F%8C%E5%90%91%E9%80%9A%E8%AE%AF%E7%94%B3%E8%AF%B7&body=0" style="color: #3b82f6;">回复该邮件</a>以达成双向通讯，我们的邮件服务对于双向通讯客户无发邮限制。</p>';
+const EMAIL_REPLY_HINT = '<p style="margin-top: 20px; padding: 15px; background-color: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 4px;"><strong>💡 提示：</strong>建议您<a href="mailto:bbs@kukie.cn?subject=%E5%8F%8C%E5%90%91%E9%80%9A%E8%AE%AF%E7%94%B3%E8%AF%B7&body=0" style="color: #3b82f6;">回复该邮件</a>以达成双向通讯，我们的邮件服务对于双向通讯客户无发邮限制。</p>';
 function isValidEmail(email: string): boolean {
 	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -217,7 +217,7 @@ const EMAIL_TEMPLATE_DEFINITIONS: EmailTemplateDefinition[] = [
 		label: '密码重置邮件',
 		requiredFields: ['resetLink'],
 		defaults: (_origin) => ({
-			resetLink: 'https://2x.nz/forum/auth/reset-password/?token=test-reset-token'
+			resetLink: 'https://www.kukie.cn/forum/login/?token=test-reset-token'
 		}),
 		build: (payload) => ({
 			subject: '密码重置请求',
@@ -362,7 +362,7 @@ const EMAIL_TEMPLATE_DEFINITIONS: EmailTemplateDefinition[] = [
 		defaults: (_origin) => ({
 			username: '测试用户',
 			postTitle: '示例帖子标题',
-			postUrl: 'https://2x.nz/forum/post/?id=1'
+			postUrl: 'https://www.kukie.cn/forum/post/?id=1'
 		}),
 build: (payload) => ({
 			subject: `您的帖子已被管理员删除：${payload.postTitle}`,
@@ -384,7 +384,7 @@ build: (payload) => ({
 			commenterName: '测试评论者',
 			postTitle: '示例帖子标题',
 			commentContent: '这是一条用于测试的新评论内容。',
-			postUrl: 'https://2x.nz/forum/post/?id=1'
+			postUrl: 'https://www.kukie.cn/forum/post/?id=1'
 		}),
 build: (payload) => ({
 			subject: `您的帖子有新评论：${payload.postTitle}`,
@@ -406,7 +406,7 @@ build: (payload) => ({
 			commenterName: '测试评论者',
 			postTitle: '示例帖子标题',
 			replyContent: '这是一条用于测试的新回复内容。',
-			postUrl: 'https://2x.nz/forum/post/?id=1'
+			postUrl: 'https://www.kukie.cn/forum/post/?id=1'
 		}),
 		build: (payload) => ({
 			subject: '您的评论有新回复',
@@ -435,7 +435,7 @@ build: (payload) => ({
 					<p><strong>摘要：</strong>${escapeHtml(payload.summary)}</p>
 					<p><strong>链接：</strong></p>
 					<p>${payload.articleLinks}</p>
-					<p style="font-size:0.8em;color:#666;">您收到这封邮件，是因为您已开启文章更新邮件提醒。如需更改您的首选项，请前往 <a href="https://2x.nz/forum/me/">https://2x.nz/forum/me/</a></p>
+					<p style="font-size:0.8em;color:#666;">您收到这封邮件，是因为您已开启文章更新邮件提醒。如需更改您的首选项，请前往 <a href="https://www.kukie.cn/forum/profile/">https://www.kukie.cn/forum/profile/</a></p>
 					${EMAIL_REPLY_HINT}
 				`
 		})
@@ -455,7 +455,7 @@ build: (payload) => ({
 					<h1>新帖通知</h1>
 					<p><strong>用户：</strong>${escapeHtml(payload.username)}</p>
 					<p><strong>标题：</strong>${escapeHtml(payload.title)}</p>
-					<p>https://2x.nz/forum/post/?id=${encodeURIComponent(payload.postId)}</p>
+					<p>https://www.kukie.cn/forum/post/?id=${encodeURIComponent(payload.postId)}</p>
 				`
 		})
 	}
@@ -1047,7 +1047,7 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 		// --- AUTH ROUTES ---
 
 		// --- GitHub OAuth ---
-		const FRONTEND_BASE = 'https://2x.nz/forum';
+		const FRONTEND_BASE = 'https://www.kukie.cn/forum';
 		const GITHUB_DEFAULT_REDIRECT = `${FRONTEND_BASE}/auth/login/`;
 		const GITHUB_OAUTH_STATE_TTL = 600; // seconds
 
@@ -1064,7 +1064,7 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 			try {
 				const parsed = new URL(raw);
 				if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return GITHUB_DEFAULT_REDIRECT;
-				const allowedHosts = new Set(['2x.nz', 'www.2x.nz', 'i.2x.nz', 'localhost', '127.0.0.1']);
+				const allowedHosts = new Set(['www.kukie.cn', 'kukie.cn', 'bbs.kukie.cn', 'localhost', '127.0.0.1']);
 				if (!allowedHosts.has(parsed.hostname)) return GITHUB_DEFAULT_REDIRECT;
 				return parsed.toString();
 			} catch {
@@ -1812,7 +1812,7 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 				await env.forum_db.prepare('UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE id = ?')
 					.bind(token, expires, user.id).run();
 
-				const resetLink = `https://2x.nz/forum/auth/reset-password/?token=${encodeURIComponent(token)}`;
+				const resetLink = `https://www.kukie.cn/forum/login/?token=${encodeURIComponent(token)}`;
 
 				ctx.waitUntil(sendEmailByTemplate(email, 'reset_password', { resetLink }).catch(console.error));
 				return jsonResponse({ success: true });
@@ -2307,7 +2307,7 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 				if (post.author_id !== userPayload.id) {
 					const setting = await env.forum_db.prepare("SELECT value FROM settings WHERE key = 'notify_on_post_delete'").first();
 					if (setting && setting.value === '1') {
-						const postUrl = `https://2x.nz/forum/post/?id=${id}`;
+						const postUrl = `https://www.kukie.cn/forum/post/?id=${id}`;
 						ctx.waitUntil(sendEmailByTemplate(post.email as string, 'admin_post_deleted', {
 							username: post.username,
 							postTitle: post.title,
@@ -2638,7 +2638,7 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 				).bind(token).run();
 
 				if (success) {
-					return redirectResponse('https://2x.nz/forum/auth/login/');
+					return redirectResponse('https://www.kukie.cn/forum/login/');
 				} else {
 					return textResponse('token 无效或已过期', 400);
 				}
@@ -3130,7 +3130,7 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 					// Fetch commenter name
 					const commenter = await env.forum_db.prepare('SELECT username FROM users WHERE id = ?').bind(userPayload.id).first();
 					const commenterName = commenter.username;
-					const postUrl = `https://2x.nz/forum/post/?id=${postId}`;
+					const postUrl = `https://www.kukie.cn/forum/post/?id=${postId}`;
 
 					// Notify Post Author (if not self)
 					if (post && post.author_id !== userPayload.id && post.email_notifications === 1) {
@@ -3407,7 +3407,7 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 				// Build email content
 				const articleLinks = postUrls.length > 0
 					? postUrls.map(url => `<a href="${escapeHtml(url)}">${escapeHtml(url)}</a>`).join('<br>')
-					: '<a href="https://2x.nz">查看博客</a>';
+					: '<a href="https://www.kukie.cn">查看博客</a>';
 
 				const summary = summaries.length > 0 ? summaries.join('；') : '博客更新';
 
@@ -3532,195 +3532,6 @@ if (notify_on_new_post !== undefined) batch.push(stmt.bind('notify_on_new_post',
 			} catch (e) { return handleError(e); }
 		}
 
-		// ============== AI Draw Proxy (d.2x.nz) ==============
-		const DRAW_BACKEND = 'https://d.2x.nz';
-		const DRAW_ACCESS_CLIENT_ID = '6864bbcb13aa07d0f6f51233acdc9ad8.access';
-		const DRAW_ACCESS_CLIENT_SECRET = (env as any).AI_DRAW_ACCESS || '';
-		const DRAW_API_SECRET = (env as any).DRAW_API_SECRET || '';
-
-		// POST /api/draw/ws/ticket — 鉴权+限流（立即写入，可由 rollback 回滚）后签发直连 ticket
-		if (url.pathname === '/api/draw/ws/ticket' && method === 'POST') {
-			try {
-				const userPayload = await authenticate(request);
-
-				const drawUser = await env.forum_db.prepare(
-					'SELECT username, draw_banned FROM users WHERE id = ?'
-				).bind(userPayload.id).first();
-				const creatorName = (drawUser?.username as string) || userPayload.email || 'unknown';
-
-				if (drawUser && drawUser.draw_banned) {
-					return jsonResponse({ error: '你已被禁止使用生图功能', banned: true }, 403);
-				}
-
-				const body = await request.json() as any;
-				const endpoint = body.endpoint || 'status';
-
-				if (endpoint === 'run' && userPayload.role !== 'admin') {
-					const cooldownSeconds = await getDrawCooldownSeconds();
-					if (cooldownSeconds > 0) {
-						const now = Math.floor(Date.now() / 1000);
-						const row = await env.forum_db.prepare(
-							'SELECT last_at FROM draw_rate_limits WHERE user_id = ?'
-						).bind(userPayload.id).first();
-						const lastAt = row ? Number(row.last_at) : 0;
-						const remaining = cooldownSeconds - (now - lastAt);
-						if (remaining > 0) {
-							return jsonResponse({ error: `生图冷却中，请等待 ${remaining} 秒后再试`, cooldown: true, remaining }, 429);
-						}
-						// 立即写入冷却，防止快速并发；前端遇到参数错误等可调 /rollback 抹掉
-						await env.forum_db.prepare(
-							'INSERT OR REPLACE INTO draw_rate_limits (user_id, last_at) VALUES (?, ?)'
-						).bind(userPayload.id, now).run();
-					}
-				}
-
-				const wsUrl = new URL(`${DRAW_BACKEND.replace('https:', 'wss:').replace('http:', 'ws:')}/ws/${endpoint}`);
-				wsUrl.searchParams.set('creator_name', creatorName);
-				if (DRAW_API_SECRET) {
-					const exp = Math.floor(Date.now() / 1000) + 300;
-					const payload = `${creatorName}:${exp}`;
-					const key = await crypto.subtle.importKey(
-						'raw', new TextEncoder().encode(DRAW_API_SECRET),
-						{ name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-					);
-					const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
-					const hex = [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
-					wsUrl.searchParams.set('ticket', `${payload}:${hex}`);
-				}
-
-				return jsonResponse({ url: wsUrl.toString() });
-			} catch (e) {
-				return handleError(e);
-			}
-		}
-
-		// POST /api/draw/ws/rollback — 生图未真正开始（参数错误等）时回滚冷却
-		if (url.pathname === '/api/draw/ws/rollback' && method === 'POST') {
-			try {
-				const userPayload = await authenticate(request);
-				if (userPayload.role === 'admin') return jsonResponse({ ok: true });
-				await env.forum_db.prepare(
-					'DELETE FROM draw_rate_limits WHERE user_id = ?'
-				).bind(userPayload.id).run();
-				return jsonResponse({ ok: true });
-			} catch (e) {
-				return handleError(e);
-			}
-		}
-
-		// Diagnostic endpoint for AI Draw proxy
-		if (url.pathname === '/api/draw/debug' && method === 'GET') {
-			try {
-				await authenticate(request);
-			} catch {
-				return jsonResponse({ error: 'Unauthorized' }, 401);
-			}
-			const testUrl = `${DRAW_BACKEND}/api/workflows`;
-			const diag: Record<string, unknown> = {
-				draw_backend: DRAW_BACKEND,
-				test_url: testUrl,
-				client_id: DRAW_ACCESS_CLIENT_ID,
-				secret_configured: !!DRAW_ACCESS_CLIENT_SECRET,
-			};
-			try {
-				const resp = await fetch(testUrl, {
-					headers: {
-						'CF-Access-Client-Id': DRAW_ACCESS_CLIENT_ID,
-						'CF-Access-Client-Secret': DRAW_ACCESS_CLIENT_SECRET,
-					},
-				});
-				diag.upstream_status = resp.status;
-			} catch (e) {
-				diag.upstream_error = String(e);
-			}
-
-			// Also test WebSocket reachability via HTTP
-			const wsTestUrl = `${DRAW_BACKEND}/ws/status`;
-			try {
-				const resp2 = await fetch(wsTestUrl, {
-					headers: {
-						'CF-Access-Client-Id': DRAW_ACCESS_CLIENT_ID,
-						'CF-Access-Client-Secret': DRAW_ACCESS_CLIENT_SECRET,
-					},
-				});
-				diag.ws_http_status = resp2.status;
-			} catch (e) {
-				diag.ws_http_error = String(e);
-			}
-
-			return jsonResponse(diag);
-		}
-
-		// HTTP proxy for /api/draw/*
-		if (url.pathname.startsWith('/api/draw/')) {
-			let httpUserPayload: UserPayload;
-			try {
-				httpUserPayload = await authenticate(request);
-			} catch {
-				const qToken = url.searchParams.get('token');
-				if (!qToken) return jsonResponse({ error: 'Unauthorized' }, 401);
-				const payload = await security.verifyToken(qToken);
-				if (!payload) return jsonResponse({ error: 'Invalid Token' }, 401);
-				httpUserPayload = payload;
-			}
-
-			const httpDrawUser = await env.forum_db.prepare(
-				'SELECT username, draw_banned FROM users WHERE id = ?'
-			).bind(httpUserPayload.id).first();
-			if (httpDrawUser && httpDrawUser.draw_banned) {
-				return jsonResponse({ error: '你已被禁止使用生图功能' }, 403);
-			}
-			const httpCreatorName = (httpDrawUser?.username as string) || httpUserPayload.email || 'unknown';
-
-			const cleanParams = new URLSearchParams(url.search);
-			cleanParams.delete('token');
-			const qs = cleanParams.toString();
-			const backendPath = url.pathname.replace('/api/draw', '');
-			const backendUrl = `${DRAW_BACKEND}${backendPath}${qs ? '?' + qs : ''}`;
-
-			const proxyHeaders = new Headers();
-			const contentType = request.headers.get('Content-Type');
-			if (contentType) proxyHeaders.set('Content-Type', contentType);
-			const accept = request.headers.get('Accept');
-			if (accept) proxyHeaders.set('Accept', accept);
-			proxyHeaders.set('X-Forwarded-For', request.headers.get('CF-Connecting-IP') || '');
-			proxyHeaders.set('CF-Access-Client-Id', DRAW_ACCESS_CLIENT_ID);
-			proxyHeaders.set('CF-Access-Client-Secret', DRAW_ACCESS_CLIENT_SECRET);
-			proxyHeaders.set('X-Creator-Name', httpCreatorName);
-			if (DRAW_API_SECRET) {
-				const exp = Math.floor(Date.now() / 1000) + 300;
-				const payload = `${httpCreatorName}:${exp}`;
-				const key = await crypto.subtle.importKey(
-					'raw', new TextEncoder().encode(DRAW_API_SECRET),
-					{ name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-				);
-				const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
-				const hex = [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
-				proxyHeaders.set('X-Draw-Ticket', `${payload}:${hex}`);
-			}
-
-			const proxyInit: RequestInit = {
-				method: request.method,
-				headers: proxyHeaders,
-			};
-			if (['POST', 'PUT', 'PATCH'].includes(method)) {
-				proxyInit.body = request.body;
-			}
-
-			try {
-				const upstream = await fetch(backendUrl, proxyInit);
-				const respHeaders = new Headers(upstream.headers);
-				for (const [k, v] of Object.entries(corsHeaders)) {
-					respHeaders.set(k, v);
-				}
-				return new Response(upstream.body, {
-					status: upstream.status,
-					headers: respHeaders,
-				});
-			} catch (e) {
-				return jsonResponse({ error: 'Draw backend unreachable', detail: String(e) }, 502);
-			}
-		}
 
 		if (!url.pathname.startsWith('/api')) {
 			return textResponse('Not Found', 404);
