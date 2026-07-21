@@ -1,12 +1,12 @@
 
 import { connect } from 'cloudflare:sockets';
 
-const DEFAULT_FROM_NAME = 'AcoFork Forum';
+const DEFAULT_FROM_NAME = 'forum';
 
 const SMTP_CONFIG = {
-    hostname: 'smtp.exmail.qq.com',
+    hostname: 'smtp.feishu.cn',
     port: 465,
-    user: 'i@2x.nz',
+    user: 'bbs.kukie.cn',
 };
 
 function getSMTPPassword(env?: { SMTP_PASS?: string }): string {
