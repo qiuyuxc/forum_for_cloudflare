@@ -138,7 +138,7 @@ async function sendViaSMTP(to: string, subject: string, htmlContent: string, env
 
     try {
         await sendCommand(writer, reader, null, 220);
-        await sendCommand(writer, reader, 'EHLO forum.2x.nz', 250);
+        await sendCommand(writer, reader, 'EHLO bbs.kukie.cn', 250);
         await sendCommand(writer, reader, 'AUTH LOGIN', 334);
         await sendCommand(writer, reader, btoa(SMTP_CONFIG.user), 334);
         await sendCommand(writer, reader, btoa(smtpPass), 235);
@@ -147,7 +147,7 @@ async function sendViaSMTP(to: string, subject: string, htmlContent: string, env
         await sendCommand(writer, reader, 'DATA', 354);
 
         const boundary = 'boundary_' + Date.now();
-        const messageId = `<${Date.now()}@2x.nz>`;
+        const messageId = `<${Date.now()}@kukie.cn>`;
         const date = new Date().toUTCString();
         
         // Encode Subject if necessary
